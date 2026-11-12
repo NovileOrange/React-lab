@@ -1,9 +1,10 @@
+import { useState } from 'react';
+import { useTaskContext } from '../hooks/useTaskContext';
 import type { Priority, Task } from '../types/task';
+import TaskForm from './TaskForm';
 
 interface TaskItemProps {
   task: Task;
-  onToggle: (id: number) => void;
-  onDelete: (id: number) => void;
 }
 
 const priorityLabels: Record<Priority, string> = {
@@ -18,11 +19,27 @@ const priorityBadgeClasses: Record<Priority, string> = {
   high: 'text-bg-danger',
 };
 
-function TaskItem({ task, onToggle, onDelete }: TaskItemProps) {
+function TaskItem({ task }: TaskItemProps) {
+  const { toggleTask, requestDelete, pendingDelete } = useTaskContext();
+  const [isEditing, setIsEditing] = useState(false);
   const { id, title, description, completed, priority, category } = task;
 
+  const isPending = pendingDelete?.ids.includes(id) ?? false;
+
+  if (isEditing) {
+    return (
+      <li className="list-group-item p-0">
+        <TaskForm task={task} onFinish={() => setIsEditing(false)} />
+      </li>
+    );
+  }
+
+  const itemClasses = ['list-group-item'];
+  if (isPending) itemClasses.push('list-group-item-warning', 'opacity-50');
+  else if (completed) itemClasses.push('list-group-item-success');
+
   return (
-    <li className={completed ? 'list-group-item list-group-item-success' : 'list-group-item'}>
+    <li className={itemClasses.join(' ')}>
       <div className="d-flex flex-column flex-md-row justify-content-between gap-3">
         <div>
           <h3
@@ -43,6 +60,7 @@ function TaskItem({ task, onToggle, onDelete }: TaskItemProps) {
             <span className="badge text-bg-secondary">
               {completed ? 'Виконано' : 'Не виконано'}
             </span>
+            {isPending && <span className="badge text-bg-warning">Буде видалено</span>}
           </div>
         </div>
 
@@ -50,14 +68,24 @@ function TaskItem({ task, onToggle, onDelete }: TaskItemProps) {
           <button
             type="button"
             className="btn btn-sm btn-outline-success"
-            onClick={() => onToggle(id)}
+            disabled={isPending}
+            onClick={() => toggleTask(id)}
           >
             {completed ? 'Повернути' : 'Виконано'}
           </button>
           <button
             type="button"
+            className="btn btn-sm btn-outline-secondary"
+            disabled={isPending}
+            onClick={() => setIsEditing(true)}
+          >
+            Редагувати
+          </button>
+          <button
+            type="button"
             className="btn btn-sm btn-outline-danger"
-            onClick={() => onDelete(id)}
+            disabled={isPending}
+            onClick={() => requestDelete(id)}
           >
             Видалити
           </button>

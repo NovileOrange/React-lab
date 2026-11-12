@@ -1,15 +1,12 @@
-import type { Task } from '../types/task';
+import { useTaskContext } from '../hooks/useTaskContext';
+import { filterTasks } from '../utils/taskSelectors';
 import TaskItem from './TaskItem';
 
-interface TaskListProps {
-  tasks: Task[];
-  hasTasks: boolean;
-  onToggle: (id: number) => void;
-  onDelete: (id: number) => void;
-}
+function TaskList() {
+  const { tasks, filter } = useTaskContext();
+  const visibleTasks = filterTasks(tasks, filter);
 
-function TaskList({ tasks, hasTasks, onToggle, onDelete }: TaskListProps) {
-  if (!hasTasks) {
+  if (tasks.length === 0) {
     return (
       <div className="alert alert-secondary text-center mb-0">
         <p className="mb-0">Завдань поки немає.</p>
@@ -18,7 +15,7 @@ function TaskList({ tasks, hasTasks, onToggle, onDelete }: TaskListProps) {
     );
   }
 
-  if (tasks.length === 0) {
+  if (visibleTasks.length === 0) {
     return (
       <div className="alert alert-secondary text-center mb-0">
         <p className="mb-0">За цим фільтром завдань немає.</p>
@@ -28,8 +25,8 @@ function TaskList({ tasks, hasTasks, onToggle, onDelete }: TaskListProps) {
 
   return (
     <ul className="list-group shadow-sm">
-      {tasks.map((task) => (
-        <TaskItem key={task.id} task={task} onToggle={onToggle} onDelete={onDelete} />
+      {visibleTasks.map((task) => (
+        <TaskItem key={task.id} task={task} />
       ))}
     </ul>
   );

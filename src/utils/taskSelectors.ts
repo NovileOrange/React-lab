@@ -1,5 +1,11 @@
 import type { Task, TaskFilter } from '../types/task';
 
+const filterOptionValues: TaskFilter[] = ['all', 'completed', 'active'];
+
+export function isTaskFilter(value: unknown): value is TaskFilter {
+  return filterOptionValues.includes(value as TaskFilter);
+}
+
 export function filterTasks(tasks: Task[], filter: TaskFilter): Task[] {
   if (filter === 'completed') return tasks.filter((task) => task.completed);
   if (filter === 'active') return tasks.filter((task) => !task.completed);

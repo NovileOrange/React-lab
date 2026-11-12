@@ -1,52 +1,68 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import type { NewTask, Priority } from '../types/task';
+import { useTaskContext } from '../hooks/useTaskContext';
+import type { Priority, Task } from '../types/task';
 
 interface TaskFormProps {
-  onAdd: (task: NewTask) => void;
+  task?: Task;
+  onFinish?: () => void;
 }
 
-function TaskForm({ onAdd }: TaskFormProps) {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('');
-  const [priority, setPriority] = useState<Priority>('medium');
+function TaskForm({ task, onFinish }: TaskFormProps) {
+  const { addTask, updateTask } = useTaskContext();
+  const isEditing = task !== undefined;
+
+  const [title, setTitle] = useState(task?.title ?? '');
+  const [description, setDescription] = useState(task?.description ?? '');
+  const [category, setCategory] = useState(task?.category ?? '');
+  const [priority, setPriority] = useState<Priority>(task?.priority ?? 'medium');
   const [error, setError] = useState('');
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!title.trim()) {
-      setError('Назва завдання є обов’язковою.');
-      return;
-    }
-
-    onAdd({
+    const values = {
       title: title.trim(),
       description: description.trim(),
       category: category.trim() || 'Загальне',
       priority,
-    });
+    };
 
-    setTitle('');
-    setDescription('');
-    setCategory('');
-    setPriority('medium');
+    const success = task ? updateTask(task.id, values) : addTask(values);
+
+    if (!success) {
+      setError('Назва завдання є обов’язковою.');
+      return;
+    }
+
+    if (!isEditing) {
+      setTitle('');
+      setDescription('');
+      setCategory('');
+      setPriority('medium');
+    }
     setError('');
+    onFinish?.();
   };
 
+  const idPrefix = task ? `task-${task.id}` : 'task-new';
+
   return (
-    <form className="card card-body shadow-sm" onSubmit={handleSubmit} noValidate>
+    <form
+      className={isEditing ? 'card card-body border-primary' : 'card card-body shadow-sm'}
+      onSubmit={handleSubmit}
+      noValidate
+    >
       <div className="mb-3">
-        <label className="form-label fw-semibold" htmlFor="task-title">
+        <label className="form-label fw-semibold" htmlFor={`${idPrefix}-title`}>
           Назва *
         </label>
         <input
-          id="task-title"
+          id={`${idPrefix}-title`}
           className={error ? 'form-control is-invalid' : 'form-control'}
           type="text"
           value={title}
-          placeholder="Наприклад, повторити useState"
+          placeholder="Наприклад, повторити useReducer"
           onChange={(e) => {
             setTitle(e.target.value);
             if (error) setError('');
@@ -60,11 +76,11 @@ function TaskForm({ onAdd }: TaskFormProps) {
       </div>
 
       <div className="mb-3">
-        <label className="form-label fw-semibold" htmlFor="task-description">
+        <label className="form-label fw-semibold" htmlFor={`${idPrefix}-description`}>
           Опис
         </label>
         <textarea
-          id="task-description"
+          id={`${idPrefix}-description`}
           className="form-control"
           rows={2}
           value={description}
@@ -75,11 +91,11 @@ function TaskForm({ onAdd }: TaskFormProps) {
 
       <div className="row g-3 mb-3">
         <div className="col-md-6">
-          <label className="form-label fw-semibold" htmlFor="task-category">
+          <label className="form-label fw-semibold" htmlFor={`${idPrefix}-category`}>
             Категорія
           </label>
           <input
-            id="task-category"
+            id={`${idPrefix}-category`}
             className="form-control"
             type="text"
             value={category}
@@ -88,11 +104,11 @@ function TaskForm({ onAdd }: TaskFormProps) {
           />
         </div>
         <div className="col-md-6">
-          <label className="form-label fw-semibold" htmlFor="task-priority">
+          <label className="form-label fw-semibold" htmlFor={`${idPrefix}-priority`}>
             Пріоритет
           </label>
           <select
-            id="task-priority"
+            id={`${idPrefix}-priority`}
             className="form-select"
             value={priority}
             onChange={(e) => setPriority(e.target.value as Priority)}
@@ -104,10 +120,15 @@ function TaskForm({ onAdd }: TaskFormProps) {
         </div>
       </div>
 
-      <div>
+      <div className="d-flex gap-2">
         <button className="btn btn-primary" type="submit">
-          Додати
+          {isEditing ? 'Зберегти' : 'Додати'}
         </button>
+        {isEditing && (
+          <button className="btn btn-outline-secondary" type="button" onClick={onFinish}>
+            Скасувати
+          </button>
+        )}
       </div>
     </form>
   );

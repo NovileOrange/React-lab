@@ -1,10 +1,6 @@
+import { useTaskContext } from '../hooks/useTaskContext';
 import type { TaskFilter } from '../types/task';
-
-interface TaskFiltersProps {
-  filter: TaskFilter;
-  counts: Record<TaskFilter, number>;
-  onChange: (filter: TaskFilter) => void;
-}
+import { countTasks } from '../utils/taskSelectors';
 
 const filterOptions: { value: TaskFilter; label: string }[] = [
   { value: 'all', label: 'Всі' },
@@ -12,7 +8,10 @@ const filterOptions: { value: TaskFilter; label: string }[] = [
   { value: 'active', label: 'Не виконані' },
 ];
 
-function TaskFilters({ filter, counts, onChange }: TaskFiltersProps) {
+function TaskFilters() {
+  const { tasks, filter, setFilter } = useTaskContext();
+  const counts = countTasks(tasks);
+
   return (
     <div className="btn-group" role="group" aria-label="Фільтр завдань">
       {filterOptions.map(({ value, label }) => (
@@ -21,7 +20,7 @@ function TaskFilters({ filter, counts, onChange }: TaskFiltersProps) {
           type="button"
           className={value === filter ? 'btn btn-primary' : 'btn btn-outline-primary'}
           aria-pressed={value === filter}
-          onClick={() => onChange(value)}
+          onClick={() => setFilter(value)}
         >
           {label} ({counts[value]})
         </button>

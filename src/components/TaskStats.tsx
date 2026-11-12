@@ -1,12 +1,12 @@
-interface TaskStatsProps {
-  total: number;
-  completed: number;
-  active: number;
-}
+import { useTaskContext } from '../hooks/useTaskContext';
+import { countTasks } from '../utils/taskSelectors';
 
-function TaskStats({ total, completed, active }: TaskStatsProps) {
+function TaskStats() {
+  const { tasks } = useTaskContext();
+  const { all, completed, active } = countTasks(tasks);
+
   const items = [
-    { label: 'Усього', value: total, valueClass: '' },
+    { label: 'Усього', value: all, valueClass: '' },
     { label: 'Виконано', value: completed, valueClass: 'text-success' },
     { label: 'Не виконано', value: active, valueClass: 'text-primary' },
   ];
